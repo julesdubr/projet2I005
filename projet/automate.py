@@ -90,17 +90,17 @@ class Automate(AutomateBase):
         """ Automate x str -> Automate
         rend l'automate complété d'auto, par rapport à alphabet
         """
-        # autocopy = copy.deepcopy(auto)
-        # puit = State(len(auto.listStates), False, False)
-        # autocopy.addState(puit)
+        autocopy = copy.deepcopy(auto)
+        puit = State(len(auto.listStates), False, False)
+        autocopy.addState(puit)
 
-        # for state in autocopy.listStates:
-        #     for a in alphabet:
-        #         if autocopy.succElem(state, a) == []:
-        #             t = Transition(state, a, puit)
-        #             autocopy.addTransition(t)
+        for state in autocopy.listStates:
+            for a in alphabet:
+                if autocopy.succElem(state, a) == []:
+                    t = Transition(state, a, puit)
+                    autocopy.addTransition(t)
             
-        # return autocopy
+        return autocopy
 
 
 
