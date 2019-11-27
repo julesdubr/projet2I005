@@ -9,6 +9,8 @@ from itertools import product
 from automateBase import AutomateBase
 
 
+#TEST DE MODIF D'UN FICHIER ...
+
 class Automate(AutomateBase):
         
     def succElem(self, state, lettre):
