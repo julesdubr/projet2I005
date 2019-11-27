@@ -93,7 +93,7 @@ class Automate(AutomateBase):
         rend l'automate complété d'auto, par rapport à alphabet
         """
         autocopy = copy.deepcopy(auto)
-        puit = State(len(auto.listStates), False, False)
+        puit = State(len(auto.listStates), False, False,"puit")
         autocopy.addState(puit)
 
         for state in autocopy.listStates:
@@ -111,7 +111,32 @@ class Automate(AutomateBase):
         """ Automate  -> Automate
         rend l'automate déterminisé d'auto
         """
-        return
+        cpt = 0
+        finals = {s for s in auto.getListFinalStates()}
+        cptToSet = [{s for s in auto.getListInitialStates()}]
+
+        Ss = [State(0, True, len(finals & cptToSet[0]) > 0, cptToSet[0])]
+        Ts = []
+        
+        for S in Ss:
+            temp = {(t.etiquette, t.stateDest) for s in cptToSet[cpt] for t in auto.getListTransitionsFrom(s) }
+            tempD = dict()
+            for (k, v) in temp:
+                if k not in tempD:
+                    tempD[k] = {v}
+                else:
+                    tempD[k].add(v)
+            for k, v in tempD.items():
+                if v not in cptToSet:
+                    cptToSet.append(v)
+                    Ss.append(State(len(Ss), False, len(finals & cptToSet[len(Ss)]) > 0, cptToSet[len(Ss)]))
+                    Ts.append(Transition(S, k, Ss[-1]))
+                else:
+                    Ts.append(Transition(S, k, Ss[cptToSet.index(v)]))
+
+            cpt += 1
+        return Automate(Ts)
+        
         
     @staticmethod
     def complementaire(auto,alphabet):
