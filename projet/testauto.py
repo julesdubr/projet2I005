@@ -23,11 +23,16 @@ states = [s0, s1, s2]
 trans = [t1, t2, t3, t4, t5]
 
 auto = Automate(trans, label="auto")
-complet = Automate.completeAutomate(auto,"ab")
-deter = Automate.determinisation(auto)
+auto2 = Automate([t2, t4, t1, t3, t5], label="auto")
+# complet = Automate.completeAutomate(auto,"ab")
+# deter = Automate.determinisation(auto)
+# complem = Automate.complementaire(auto, auto.getAlphabetFromTransitions())
+conca = Automate.concatenation(auto, auto2)
 
 auto.show("auto")
-complet.show("complet")
-deter.show("deter")
+# complet.show("complet")
+# deter.show("deter")
+# complem.show("complementaire")
+conca.show("concatenation")
 
 print("FIN PROGRAMME\n")

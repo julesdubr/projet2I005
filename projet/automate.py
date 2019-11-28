@@ -93,7 +93,12 @@ class Automate(AutomateBase):
         rend l'automate complété d'auto, par rapport à alphabet
         """
         autocopy = copy.deepcopy(auto)
-        puit = State(len(auto.listStates), False, False,"puit")
+        puitId = 0
+        for state in auto.listStates:
+            if puitId <= state.id:
+                puitId = state.id + 1
+
+        puit = State(puitId, False, False,"puit")
         autocopy.addState(puit)
 
         for state in autocopy.listStates:
@@ -173,6 +178,11 @@ class Automate(AutomateBase):
         """ Automate -> Automate
         rend  l'automate acceptant pour langage le complémentaire du langage de a
         """
+        autoCompletDeter = Automate.completeAutomate(Automate.determinisation(auto),alphabet)
+        for state in autoCompletDeter.listStates:
+            state.fin = not state.fin
+
+        return autoCompletDeter
               
    
     @staticmethod
@@ -180,6 +190,7 @@ class Automate(AutomateBase):
         """ Automate x Automate -> Automate
         rend l'automate acceptant pour langage l'intersection des langages des deux automates
         """
+
         return
 
     @staticmethod
@@ -198,7 +209,25 @@ class Automate(AutomateBase):
         """ Automate x Automate -> Automate
         rend l'automate acceptant pour langage la concaténation des langages des deux automates
         """
-        return
+
+        # Union des états d'auto1 et auto2
+        listState = auto1.listStates + auto2.listStates
+
+        # mise à jour des id
+        for i in range(len(auto2.listStates)-1, len(listState)):
+            if listState[i].id < listState[i-1].id:
+                listState[i].id = listState[i-1].id + 1
+
+        # récuperation des transitions vers le final de l'auto1
+        listTransToRedirect = []
+        listTrans = [] 
+        for state in listState:
+            for trans in auto1.getListTransitionsFrom(state):
+                listTrans.append(trans)
+                if trans.stateDest in auto1.getListFinalStates():
+                    listTransToRedirect.append(trans)
+            
+        return Automate(listTrans, listState)
         
        
     @staticmethod
