@@ -111,31 +111,61 @@ class Automate(AutomateBase):
         """ Automate  -> Automate
         rend l'automate déterminisé d'auto
         """
-        cpt = 0
-        finals = {s for s in auto.getListFinalStates()}
-        cptToSet = [{s for s in auto.getListInitialStates()}]
-
-        Ss = [State(0, True, len(finals & cptToSet[0]) > 0, cptToSet[0])]
-        Ts = []
         
-        for S in Ss:
-            temp = {(t.etiquette, t.stateDest) for s in cptToSet[cpt] for t in auto.getListTransitionsFrom(s) }
+        # ensemble des etats initiaux de auto
+        etatsFinaux = {s for s in auto.getListFinalStates()}
+        # liste des ensembles d'états à traiter
+        etatsATraiter = [{s for s in auto.getListInitialStates()}]
+
+        # compteur des états à traiter
+        cpt = 0
+
+        # Liste des états de l'automate déterminisé (initialisé par la liste des états initiaux de auto)
+        listeEtats = [State(0, True, len(etatsFinaux & etatsATraiter[0]) > 0, etatsATraiter[0])]
+        # Liste des transition de l'automate déterminisé
+        listeTrans = []
+        
+        for S in listeEtats:
+            # on crée un dictionnaire (etiquette, destination) pour toutes les transitions de tous les états à traiter
+            temp = {(t.etiquette, t.stateDest) for s in etatsATraiter[cpt] for t in auto.getListTransitionsFrom(s) }
+            # dictionnaire (étiquette, {destinations})
             tempD = dict()
             for (k, v) in temp:
-                if k not in tempD:
-                    tempD[k] = {v}
-                else:
-                    tempD[k].add(v)
-            for k, v in tempD.items():
-                if v not in cptToSet:
-                    cptToSet.append(v)
-                    Ss.append(State(len(Ss), False, len(finals & cptToSet[len(Ss)]) > 0, cptToSet[len(Ss)]))
-                    Ts.append(Transition(S, k, Ss[-1]))
-                else:
-                    Ts.append(Transition(S, k, Ss[cptToSet.index(v)]))
+                if k not in tempD:      # si l'étiquette n'existe pas dans tempD,
+                    tempD[k] = {v}      # on crée un ensemble de destination associé à l'étiquette
+                else:                   
+                    tempD[k].add(v)     # sinon on ajoute la destination à l'ensemble des destinations déja existant
 
+            for k, v in tempD.items():
+                if v not in etatsATraiter:      # si l'ensemble des destinations associé à l'étiquette n'est pas dans la liste des ensemble d'états à traiter
+                    etatsATraiter.append(v)     # on l'ajoute à la liste
+                                                # on crée un nouvel état contenant les destinations de l'étiquette
+                                                # et une nouvelle transition d'étiquette k partant de S et allant vers le dernier etat ajouté
+                    listeEtats.append(State(len(listeEtats), False, len(etatsFinaux & etatsATraiter[len(listeEtats)]) > 0, etatsATraiter[len(listeEtats)]))
+                    listeTrans.append(Transition(S, k, listeEtats[-1]))
+                else:
+                    # sinon on ajoute une transition d'étiquette k partant de S et allant vers l'ensemble des états correspondant
+                    listeTrans.append(Transition(S, k, listeEtats[etatsATraiter.index(v)]))
+
+            # on incrémente le compteur des états à traiter
             cpt += 1
-        return Automate(Ts)
+
+        return Automate(listeTrans)
+
+        # listeTrans = []
+        # etatsD = {s for s in auto.getListInitialStates()}
+        # etatsATraiter = [{s for s in auto.getListInitialStates()}]
+
+        # while etatsATraiter != []:
+        #     P = etatsATraiter.pop(0)
+        #     for a in auto.getAlphabetFromTransitions():
+        #         P_ = auto.succ(P, a)
+        #         t = Transition(P, a, P_)
+        #         etatsD.append(P_)
+        #         listeTrans.append(t)
+        
+        # autoD = Automate(listeTrans, etatsD, "autoDetermine")
+        # return autoD
         
         
     @staticmethod

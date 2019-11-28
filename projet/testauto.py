@@ -24,8 +24,10 @@ trans = [t1, t2, t3, t4, t5]
 
 auto = Automate(trans, label="auto")
 complet = Automate.completeAutomate(auto,"ab")
+deter = Automate.determinisation(auto)
 
 auto.show("auto")
 complet.show("complet")
+deter.show("deter")
 
 print("FIN PROGRAMME\n")
