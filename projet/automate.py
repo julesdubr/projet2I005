@@ -171,8 +171,7 @@ class Automate(AutomateBase):
         
         # autoD = Automate(listeTrans, etatsD, "autoDetermine")
         # return autoD
-        
-        
+
     @staticmethod
     def complementaire(auto,alphabet):
         """ Automate -> Automate
@@ -183,15 +182,60 @@ class Automate(AutomateBase):
             state.fin = not state.fin
 
         return autoCompletDeter
-              
-   
+     
+
     @staticmethod
     def intersection (auto0, auto1):
         """ Automate x Automate -> Automate
         rend l'automate acceptant pour langage l'intersection des langages des deux automates
         """
+        inits = list(product(auto0.getListInitialStates(), auto1.getListInitialStates()))
+        finals = list(product(auto0.getListFinalStates(), auto1.getListFinalStates()))
 
-        return
+        cpt = 0
+        cptToTuple = inits
+        Ss = []
+        Ts = []
+        for cpt in range(0, len(inits)):
+            Ss.append(State(cpt, True, inits[cpt] in finals, inits[cpt]))
+
+
+        print(cptToTuple, cptToTuple[0], cptToTuple[0][0], cptToTuple[0][1])
+        print(auto0.getListTransitionsFrom(cptToTuple[0][0])[0])
+
+        cpt = 0
+        for S in Ss:
+            tempLeft = [(t.etiquette, t.stateDest) for t in auto0.getListTransitionsFrom(cptToTuple[cpt][0])]
+            tempRight = [(t.etiquette, t.stateDest) for t in auto1.getListTransitionsFrom(cptToTuple[cpt][1])]
+
+            tempDLeft = dict()
+            tempDRight = dict()
+            for (k, v) in tempLeft:
+                if k not in tempDLeft:
+                    tempDLeft[k] = {v}
+                else:
+                    tempDLeft[k].add(v)
+            for (k, v) in tempRight:
+                if k not in tempDRight:
+                    tempDRight[k] = {v}
+                else:
+                    tempDRight[k].add(v)
+            print(tempDLeft, tempDRight)
+            for (k, v) in tempDLeft.items():
+                if k not in tempDRight: continue
+                prod = list(product(list(v), list(tempDRight[k])))
+                #print(prod)
+                for label in prod:
+                    if label not in cptToTuple:
+                        cptToTuple.append(label)
+                        Ss.append(State(len(Ss), False, label in finals, label))
+                        Ts.append(Transition(S, k, Ss[-1]))
+                    else:
+                        Ts.append(Transition(S, k, Ss[cptToTuple.index(label)]))
+            cpt += 1
+
+        return Automate(Ts)
+
 
     @staticmethod
     def union (auto0, auto1):
@@ -228,15 +272,50 @@ class Automate(AutomateBase):
                     listTransToRedirect.append(trans)
             
         return Automate(listTrans, listState)
-        
-       
+
+#/////////////////////////////////////////////////////////////////////////////// 
+
+@staticmethod
+    def concatenation (auto1, auto2):
+        """ Automate x Automate -> Automate
+        H: les etats des deux automates ont des ids differents
+        rend l'automate acceptant pour langage la concaténation des langages des deux automates
+        """
+        auto1Bis = copy.deepcopy(auto1)
+        auto2Bis = copy.deepcopy(auto2)
+        areNotEqual = str(auto1Bis) != str(auto2Bis) 
+        if areNotEqual:
+            Ts = auto1Bis.listTransitions + auto2Bis.listTransitions
+        else:
+            Ts = auto1Bis.listTransitions
+        Ss1 = auto1Bis.listStates
+        Ss2 = auto2Bis.listStates
+        for s in Ss1:
+            ts = auto1Bis.getListTransitionsFrom(s)
+            for t in ts:
+                if t.stateDest in auto1Bis.getListFinalStates():
+                    for i in auto2Bis.getListInitialStates():
+                        Ts.append(Transition(t.stateSrc, t.etiquette, i))
+        if not Automate.accepte(auto2, "") and areNotEqual:
+            for s in Ss1:
+                s.fin = False
+        if not Automate.accepte(auto1, "") and areNotEqual:
+            for s in Ss2:
+                s.init = False
+
+        Ss = Ss1 + Ss2
+        return Automate(Ts, Ss)
+
+#//////////////////////////////////////////////////////////////////////////////    
+
+
     @staticmethod
     def etoile (auto):
         """ Automate  -> Automate
         rend l'automate acceptant pour langage l'étoile du langage de a
         """
-        return
-
-
+        autoEtoile = Automate.concatenation(auto, auto)
+        autoEtoile.addState(State(len(autoEtoile.listStates) + 1, True, True, "Eps"))
+        return autoEtoile
 
 
