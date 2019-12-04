@@ -116,72 +116,48 @@ class Automate(AutomateBase):
         """ Automate  -> Automate
         rend l'automate déterminisé d'auto
         """
-        
-        # ensemble des etats initiaux de auto
         etatsFinaux = {s for s in auto.getListFinalStates()}
-        # liste des ensembles d'états à traiter
         etatsATraiter = [{s for s in auto.getListInitialStates()}]
-
-        # compteur des états à traiter
         cpt = 0
 
-        # Liste des états de l'automate déterminisé (initialisé par la liste des états initiaux de auto)
         listeEtats = [State(0, True, len(etatsFinaux & etatsATraiter[0]) > 0, etatsATraiter[0])]
-        # Liste des transition de l'automate déterminisé
         listeTrans = []
         
-        for S in listeEtats:
-            # on crée un dictionnaire (etiquette, destination) pour toutes les transitions de tous les états à traiter
-            temp = {(t.etiquette, t.stateDest) for s in etatsATraiter[cpt] for t in auto.getListTransitionsFrom(s) }
-            # dictionnaire (étiquette, {destinations})
-            tempD = dict()
-            for (k, v) in temp:
-                if k not in tempD:      # si l'étiquette n'existe pas dans tempD,
-                    tempD[k] = {v}      # on crée un ensemble de destination associé à l'étiquette
+        for etat in listeEtats:
+            # transATraiter : dict( etiquette, destination )
+            transATraiter = {(t.etiquette, t.stateDest) for s in etatsATraiter[cpt] for t in auto.getListTransitionsFrom(s) }
+            # transATraiter : dict( etiquette, {destinations} )
+            transDeter = dict()
+            
+            for (etiq, dest) in transATraiter:
+                if etiq not in transDeter:
+                    transDeter[etiq] = {dest}
                 else:                   
-                    tempD[k].add(v)     # sinon on ajoute la destination à l'ensemble des destinations déja existant
+                    transDeter[etiq].add(dest)
 
-            for k, v in tempD.items():
-                if v not in etatsATraiter:      # si l'ensemble des destinations associé à l'étiquette n'est pas dans la liste des ensemble d'états à traiter
-                    etatsATraiter.append(v)     # on l'ajoute à la liste
-                                                # on crée un nouvel état contenant les destinations de l'étiquette
-                                                # et une nouvelle transition d'étiquette k partant de S et allant vers le dernier etat ajouté
+            for etiq, dest in transDeter.items():
+                if dest not in etatsATraiter:
+                    etatsATraiter.append(dest)
                     listeEtats.append(State(len(listeEtats), False, len(etatsFinaux & etatsATraiter[len(listeEtats)]) > 0, etatsATraiter[len(listeEtats)]))
-                    listeTrans.append(Transition(S, k, listeEtats[-1]))
+                    listeTrans.append(Transition(etat, etiq, listeEtats[-1]))
                 else:
-                    # sinon on ajoute une transition d'étiquette k partant de S et allant vers l'ensemble des états correspondant
-                    listeTrans.append(Transition(S, k, listeEtats[etatsATraiter.index(v)]))
-
-            # on incrémente le compteur des états à traiter
-            cpt += 1
+                    listeTrans.append(Transition(etat, etiq, listeEtats[etatsATraiter.index(dest)]))
+            
+            cpt += 1    # a tester : etatsATraiter.remove[0]
 
         return Automate(listeTrans)
 
-        # listeTrans = []
-        # etatsD = {s for s in auto.getListInitialStates()}
-        # etatsATraiter = [{s for s in auto.getListInitialStates()}]
-
-        # while etatsATraiter != []:
-        #     P = etatsATraiter.pop(0)
-        #     for a in auto.getAlphabetFromTransitions():
-        #         P_ = auto.succ(P, a)
-        #         t = Transition(P, a, P_)
-        #         etatsD.append(P_)
-        #         listeTrans.append(t)
-        
-        # autoD = Automate(listeTrans, etatsD, "autoDetermine")
-        # return autoD
 
     @staticmethod
     def complementaire(auto,alphabet):
         """ Automate -> Automate
         rend  l'automate acceptant pour langage le complémentaire du langage de a
         """
-        autoCompletDeter = Automate.completeAutomate(Automate.determinisation(auto),alphabet)
-        for state in autoCompletDeter.listStates:
+        autoComplementaire = Automate.completeAutomate(Automate.determinisation(auto),alphabet)
+        for state in autoComplementaire.listStates:
             state.fin = not state.fin
 
-        return autoCompletDeter
+        return autoComplementaire
      
 
     @staticmethod
@@ -242,71 +218,44 @@ class Automate(AutomateBase):
         """ Automate x Automate -> Automate
         rend l'automate acceptant pour langage l'union des langages des deux automates
         """
-        return
+        listeEtats = auto0.listStates + auto1.listStates
+        listeTrans = auto0.listTransitions + auto1.listTransitions
+        return Automate(listeTrans, listeEtats)
         
 
-   
-       
-
     @staticmethod
-    def concatenation (auto1, auto2):
-        """ Automate x Automate -> Automate
-        rend l'automate acceptant pour langage la concaténation des langages des deux automates
-        """
-
-        # Union des états d'auto1 et auto2
-        listState = auto1.listStates + auto2.listStates
-
-        # mise à jour des id
-        for i in range(len(auto2.listStates)-1, len(listState)):
-            if listState[i].id < listState[i-1].id:
-                listState[i].id = listState[i-1].id + 1
-
-        # récuperation des transitions vers le final de l'auto1
-        listTransToRedirect = []
-        listTrans = [] 
-        for state in listState:
-            for trans in auto1.getListTransitionsFrom(state):
-                listTrans.append(trans)
-                if trans.stateDest in auto1.getListFinalStates():
-                    listTransToRedirect.append(trans)
-            
-        return Automate(listTrans, listState)
-
-#/////////////////////////////////////////////////////////////////////////////// 
-
-@staticmethod
     def concatenation (auto1, auto2):
         """ Automate x Automate -> Automate
         H: les etats des deux automates ont des ids differents
         rend l'automate acceptant pour langage la concaténation des langages des deux automates
         """
-        auto1Bis = copy.deepcopy(auto1)
-        auto2Bis = copy.deepcopy(auto2)
-        areNotEqual = str(auto1Bis) != str(auto2Bis) 
-        if areNotEqual:
-            Ts = auto1Bis.listTransitions + auto2Bis.listTransitions
+        auto1_copie = copy.deepcopy(auto1)
+        auto2_copie = copy.deepcopy(auto2)
+        egaux = str(auto1_copie) == str(auto2_copie) 
+
+        if egaux:
+            listeTrans = auto1_copie.listTransitions
         else:
-            Ts = auto1Bis.listTransitions
-        Ss1 = auto1Bis.listStates
-        Ss2 = auto2Bis.listStates
-        for s in Ss1:
-            ts = auto1Bis.getListTransitionsFrom(s)
-            for t in ts:
-                if t.stateDest in auto1Bis.getListFinalStates():
-                    for i in auto2Bis.getListInitialStates():
-                        Ts.append(Transition(t.stateSrc, t.etiquette, i))
-        if not Automate.accepte(auto2, "") and areNotEqual:
-            for s in Ss1:
-                s.fin = False
-        if not Automate.accepte(auto1, "") and areNotEqual:
-            for s in Ss2:
-                s.init = False
+            listeTrans = auto1_copie.listTransitions + auto2_copie.listTransitions
 
-        Ss = Ss1 + Ss2
-        return Automate(Ts, Ss)
+        listeEtats1 = auto1_copie.listStates
+        listeEtats2 = auto2_copie.listStates
 
-#//////////////////////////////////////////////////////////////////////////////    
+        for etat in listeEtats1:
+            listeTrans = auto1_copie.getListTransitionsFrom(etat)
+            for trans in listeTrans:
+                if trans.stateDest in auto1_copie.getListFinalStates():
+                    for i in auto2_copie.getListInitialStates():
+                        listeTrans.append(Transition(trans.stateSrc, trans.etiquette, i))
+
+        if not (Automate.accepte(auto2, "") or egaux):
+            for etat in listeEtats1:
+                etat.fin = False
+        if not (Automate.accepte(auto1, "") or egaux):
+            for etat in listeEtats2:
+                etat.init = False
+
+        return Automate(listeTrans, listeEtats1 + listeEtats2)
 
 
     @staticmethod
