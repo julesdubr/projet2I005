@@ -143,7 +143,7 @@ class Automate(AutomateBase):
                 else:
                     listeTrans.append(Transition(etat, etiq, listeEtats[etatsATraiter.index(dest)]))
             
-            cpt += 1    # a tester : etatsATraiter.remove[0]
+            cpt += 1    # a tester : etatsATraiter.pop(0)
 
         return Automate(listeTrans)
 
@@ -165,62 +165,112 @@ class Automate(AutomateBase):
         """ Automate x Automate -> Automate
         rend l'automate acceptant pour langage l'intersection des langages des deux automates
         """
-        inits = list(product(auto0.getListInitialStates(), auto1.getListInitialStates()))
-        finals = list(product(auto0.getListFinalStates(), auto1.getListFinalStates()))
 
-        cpt = 0
-        cptToTuple = inits
-        Ss = []
-        Ts = []
-        for cpt in range(0, len(inits)):
-            Ss.append(State(cpt, True, inits[cpt] in finals, inits[cpt]))
+        # inits = list(product(auto0.getListInitialStates(), auto1.getListInitialStates()))
+        # finals = list(product(auto0.getListFinalStates(), auto1.getListFinalStates()))
+
+        # cpt = 0
+        # cptToTuple = inits
+        # Ss = []
+        # Ts = []
+        # for cpt in range(0, len(inits)):
+        #     Ss.append(State(cpt, True, inits[cpt] in finals, inits[cpt]))
 
 
-        print(cptToTuple, cptToTuple[0], cptToTuple[0][0], cptToTuple[0][1])
-        print(auto0.getListTransitionsFrom(cptToTuple[0][0])[0])
+        # print(cptToTuple, cptToTuple[0], cptToTuple[0][0], cptToTuple[0][1])
+        # print(auto0.getListTransitionsFrom(cptToTuple[0][0])[0])
 
-        cpt = 0
-        for S in Ss:
-            tempLeft = [(t.etiquette, t.stateDest) for t in auto0.getListTransitionsFrom(cptToTuple[cpt][0])]
-            tempRight = [(t.etiquette, t.stateDest) for t in auto1.getListTransitionsFrom(cptToTuple[cpt][1])]
+        # cpt = 0
+        # for S in Ss:
+        #     tempLeft = [(t.etiquette, t.stateDest) for t in auto0.getListTransitionsFrom(cptToTuple[cpt][0])]
+        #     tempRight = [(t.etiquette, t.stateDest) for t in auto1.getListTransitionsFrom(cptToTuple[cpt][1])]
 
-            tempDLeft = dict()
-            tempDRight = dict()
-            for (k, v) in tempLeft:
-                if k not in tempDLeft:
-                    tempDLeft[k] = {v}
+        #     tempDLeft = dict()
+        #     tempDRight = dict()
+        #     for (k, v) in tempLeft:
+        #         if k not in tempDLeft:
+        #             tempDLeft[k] = {v}
+        #         else:
+        #             tempDLeft[k].add(v)
+        #     for (k, v) in tempRight:
+        #         if k not in tempDRight:
+        #             tempDRight[k] = {v}
+        #         else:
+        #             tempDRight[k].add(v)
+        #     print(tempDLeft, tempDRight)
+        #     for (k, v) in tempDLeft.items():
+        #         if k not in tempDRight: continue
+        #         prod = list(product(list(v), list(tempDRight[k])))
+        #         #print(prod)
+        #         for label in prod:
+        #             if label not in cptToTuple:
+        #                 cptToTuple.append(label)
+        #                 Ss.append(State(len(Ss), False, label in finals, label))
+        #                 Ts.append(Transition(S, k, Ss[-1]))
+        #             else:
+        #                 Ts.append(Transition(S, k, Ss[cptToTuple.index(label)]))
+        #     cpt += 1
+
+        # return Automate(Ts)
+
+        # etatsInit : list(tuple)
+        etatsInit = list(product(auto0.getListInitialStates(), auto1.getListInitialStates()))
+        # etatsFinal : list(tuple)
+        etatsFinal = list(product(auto0.getListFinalStates(), auto1.getListIgetListFinalStatesnitialStates()))
+
+        listeEtats = []
+        listeTrans = []
+
+        etatsATraiter = etatsInit
+
+        # Etats Initiaux
+        for i in range(len(etatsInit)):
+            listeEtats.append(State(i, True, etatsInit[i] in etatsFinal, etatsInit[i]))
+        
+        for etat in listeEtats:
+            # tupleTransk : list( (etiquette, destination) )
+            tupleTrans0 = [(trans.etiquette, trans.stateDest) for trans in auto0.getListTransitionsFrom(etatsATraiter[0][0])]
+            tupleTrans1 = [(trans.etiquette, trans.stateDest) for trans in auto1.getListTransitionsFrom(etatsATraiter[0][1])]
+        
+            # dicoTrans0 : dict( etiq, {destinations} )
+            dicoTrans0 = dict()
+            dicoTrans1 = dict()
+
+            for (etiq, dest) in tupleTrans0:
+                if etiq not in dicoTrans0:
+                    dicoTrans0[etiq] = {dest}
                 else:
-                    tempDLeft[k].add(v)
-            for (k, v) in tempRight:
-                if k not in tempDRight:
-                    tempDRight[k] = {v}
+                    dicoTrans0[etiq].add(dest)
+
+            for (etiq, dest) in tupleTrans1:
+                if etiq not in dicoTrans0:
+                    dicoTrans1[etiq] = {dest}
                 else:
-                    tempDRight[k].add(v)
-            print(tempDLeft, tempDRight)
-            for (k, v) in tempDLeft.items():
-                if k not in tempDRight: continue
-                prod = list(product(list(v), list(tempDRight[k])))
-                #print(prod)
-                for label in prod:
-                    if label not in cptToTuple:
-                        cptToTuple.append(label)
-                        Ss.append(State(len(Ss), False, label in finals, label))
-                        Ts.append(Transition(S, k, Ss[-1]))
+                    dicoTrans1[etiq].add(dest)
+
+            for (etiq, dest) in dicoTrans0.items():
+                if etiq not in dicoTrans1:
+                    continue
+                produit = list(product(list(dest), list(dicoTrans0[etiq])))
+
+                for label in produit:
+                    if label not in etatsATraiter:
+                        etatsATraiter.append(etiq)
+                        listeEtats.append(State(len(listeEtats), False, label in etatsFinal, label))
+                        listeTrans.append(Transition(etat, etiq, listeEtats[-1]))
                     else:
-                        Ts.append(Transition(S, k, Ss[cptToTuple.index(label)]))
-            cpt += 1
+                        listeTrans.append(Transition(etat, etiq, listeEtats[etatsATraiter.index(label)]))
 
-        return Automate(Ts)
+            etatsATraiter.pop(0)
 
+        return Automate(listeTrans)
 
     @staticmethod
     def union (auto0, auto1):
         """ Automate x Automate -> Automate
         rend l'automate acceptant pour langage l'union des langages des deux automates
         """
-        listeEtats = auto0.listStates + auto1.listStates
-        listeTrans = auto0.listTransitions + auto1.listTransitions
-        return Automate(listeTrans, listeEtats)
+        return Automate(auto0.listStates + auto1.listStates, auto0.listTransitions + auto1.listTransitions)
         
 
     @staticmethod
