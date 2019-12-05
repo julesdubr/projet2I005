@@ -98,7 +98,7 @@ class Automate(AutomateBase):
             if puitId <= state.id:
                 puitId = state.id + 1
 
-        puit = State(puitId, False, False,"puit")
+        puit = State(puitId, False, False, "puit")
         autocopy.addState(puit)
 
         for state in autocopy.listStates:
@@ -116,16 +116,35 @@ class Automate(AutomateBase):
         """ Automate  -> Automate
         rend l'automate déterminisé d'auto
         """
-        etatsFinaux = {s for s in auto.getListFinalStates()}
-        etatsATraiter = [{s for s in auto.getListInitialStates()}]
-        cpt = 0
+        # etatsInit = set(s for s in auto.getListInitialStates())
+        # etatsATraiter = [ etatsInit ]
 
-        listeEtats = [State(0, True, len(etatsFinaux & etatsATraiter[0]) > 0, etatsATraiter[0])]
+        # listeEtats = [State(0, True, State.isFinalIn(list(etatsInit)) > 0, etatsInit)]
+        # listeTrans = []
+        
+        # while etatsATraiter != []:
+        #     setCourant = etatsATraiter.pop(0)
+        #     etatCourant = listeEtat[0]
+        #     for lettre in auto.getAlphabetFromTransitions():
+        #         newSet = set(auto.succ(list(setCourant), lettre))
+        #         etatSuivant = State(len(listeEtats), False, State.isFinalIn(list(newSet)), str(newSet))
+        #         if etatSuivant not in listeEtats:
+        #             etatsATraiter.append(newSet)
+        #             listeEtats.append(etatSuivant)
+        #             listeTrans.append(Transition(etatCourant, lettre, etatSuivant))
+
+        # return Automate(listeTrans)
+
+
+        etatsInit = {s for s in auto.getListInitialStates()}
+        etatsATraiter = [{s for s in auto.getListInitialStates()}]
+
+        listeEtats = [State(0, True, State.isFinalIn(etatsInit), etatsInit)]
         listeTrans = []
         
         for etat in listeEtats:
             # transATraiter : dict( etiquette, destination )
-            transATraiter = {(t.etiquette, t.stateDest) for s in etatsATraiter[cpt] for t in auto.getListTransitionsFrom(s) }
+            transATraiter = {(t.etiquette, t.stateDest) for s in etatsATraiter[-1] for t in auto.getListTransitionsFrom(s) }
             # transATraiter : dict( etiquette, {destinations} )
             transDeter = dict()
             
@@ -138,12 +157,10 @@ class Automate(AutomateBase):
             for etiq, dest in transDeter.items():
                 if dest not in etatsATraiter:
                     etatsATraiter.append(dest)
-                    listeEtats.append(State(len(listeEtats), False, len(etatsFinaux & etatsATraiter[len(listeEtats)]) > 0, etatsATraiter[len(listeEtats)]))
+                    listeEtats.append(State(len(listeEtats), False, State.isFinalIn(dest), dest))
                     listeTrans.append(Transition(etat, etiq, listeEtats[-1]))
                 else:
                     listeTrans.append(Transition(etat, etiq, listeEtats[etatsATraiter.index(dest)]))
-            
-            cpt += 1    # a tester : etatsATraiter.pop(0)
 
         return Automate(listeTrans)
 
