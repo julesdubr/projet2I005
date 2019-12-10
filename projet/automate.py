@@ -126,25 +126,25 @@ class Automate(AutomateBase):
         listeTrans = []
 
         while etatsATraiter != []:
-            setSrc = etatsATraiter.pop()
-            dejaTraites.append(setSrc)
-            for etat in listeEtats:
+            setSrc = etatsATraiter.pop()        # on récupère un set d'états aléatoire parmis les états à traiter
+            dejaTraites.append(setSrc)          # on l'ajoute à la liste des états déjà traités
+            for etat in listeEtats:             # on récupère l'indice dans listeEtat de l'état source correspondant
                 if str(etat.label) == str(setSrc):
                     idSrc = listeEtats.index(etat)
 
             for lettre in alphabet:
-                isIn = False
-                setDst = set(auto.succ(setSrc, lettre))
+                setDst = set(auto.succ(setSrc, lettre))     # on récupère le set d'états d'arrivée     
                 if setDst != set():
-                    if setDst not in dejaTraites:
+                    if setDst not in dejaTraites:           # on l'ajoute aux états a traiter si on ne l'a pas déja traité
                         etatsATraiter.append(setDst)
 
-                    for etat in listeEtats:
+                    isIn = False
+                    for etat in listeEtats:     # si l'état dest est déjà dans listeEtats on le récupère
                         if str(etat.label) == str(setDst):
                             isIn = True
                             listeTrans.append(Transition(listeEtats[idSrc], lettre, listeEtats[listeEtats.index(etat)]))
 
-                    if not isIn:
+                    if not isIn:                # sinon on le crée
                         listeEtats.append(State(len(listeEtats), False, State.isFinalIn(setDst), str(setDst)))
                         listeTrans.append(Transition(listeEtats[idSrc], lettre, listeEtats[-1]))
 
@@ -219,7 +219,7 @@ class Automate(AutomateBase):
     @staticmethod
     def union (auto0, auto1):
         """ Automate  -> Automate
-        rend l'automate acceptant pour langage l'union des langage des deux automates
+        rend l'automate acceptant pour langage l'union des langages des deux automates
         """
         listeEtats = list(set(auto0.listStates + auto1.listStates))
         listeInitl = list(set(auto0.getListInitialStates() + auto1.getListInitialStates()))
@@ -240,9 +240,36 @@ class Automate(AutomateBase):
     @staticmethod
     def concatenation (auto1, auto2):
         """ Automate  -> Automate
-        rend l'automate acceptant pour langage la concatenation des langage des deux automates
+        rend l'automate acceptant pour langage la concatenation des langages des deux automates
         """
-        return auto1
+        auto1_copie = copy.deepcopy(auto1)
+        auto2_copie = copy.deepcopy(auto2)
+        listeTrans = auto1_copie.listTransitions + auto2_copie.listTransitions
+    
+        # modification des ids
+        idMax = 0
+        for etat in auto1_copie.listStates:
+            idMax = max(idMax, etat.id + 1)
+        for etat in auto2_copie.listStates:
+            etat.id = idMax
+            etat.label = etat.id
+            idMax += 1
+
+        # transitions vers les états finaux de l'auto1 copiées vers initaux de l'auto2
+        for trans in auto1_copie.listTransitions:
+            if trans.stateDest in auto1.getListFinalStates():
+                for etat in auto2_copie.getListInitialStates():
+                    listeTrans.append(Transition(trans.stateSrc, trans.etiquette, etat))
+
+        # modification des états initiaux et finaux
+        if not Automate.accepte(auto2, ""):     
+            for etat in auto1_copie.getListFinalStates():
+                etat.fin = False
+        if not Automate.accepte(auto1, ""):     
+            for etat in auto2_copie.getListFinalStates():
+                etat.init = False
+
+        return Automate(listeTrans)
 
 
     @staticmethod
