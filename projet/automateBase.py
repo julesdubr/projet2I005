@@ -212,7 +212,7 @@ class AutomateBase :
             fichier.write(self.toDot())
             fichier.close()
             os.system("dot -Tps "+ nomFichier + ".dot -o " + nomFichier + ".ps" )
-            os.system("ps2pdf " + nomFichier + ".ps ")
+            # os.system("ps2pdf " + nomFichier + ".ps ")
             # os.system("ps2pdf " + nomFichier + ".ps " + nomFichier + ".pdf")
             #MAC 
             #os.system("open " + nomFichier + ".pdf")

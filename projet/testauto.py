@@ -45,18 +45,18 @@ trans3 = [t1_3, t2_3, t3_3, t4_3, t5_3, t6_3, t7_3]
 auto3 = Automate(trans3, label="auto3")
 
 # cmplt = Automate.completeAutomate(auto1,"ab")
-deter = Automate.determinisation(auto3)
+# deter = Automate.determinisation(auto3)
 # cmplm = Automate.complementaire(auto1, auto.getAlphabetFromTransitions())
 # inter = Automate.intersection(auto1, auto2)
-# union = Automate.union(auto1, auto2)
+union = Automate.union(auto1, auto2)
 # conca = Automate.concatenation(auto1, auto2)
 
 # auto1.show("auto1")
 auto3.show("auto3")
-deter.show("determinisation")
+# deter.show("determinisation")
 # cmplm.show("complementaire")
 # inter.show("intersection")
-# union.show("union")
+union.show("union")
 # conca.show("concatenation")
 
 print("\n/!\ Automates prets pour detruire le monde /!\\\n")

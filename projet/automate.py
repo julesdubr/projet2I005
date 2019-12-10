@@ -217,6 +217,35 @@ class Automate(AutomateBase):
 
 
     @staticmethod
+    def union (auto0, auto1):
+        """ Automate  -> Automate
+        rend l'automate acceptant pour langage l'union des langage des deux automates
+        """
+        listeEtats = list(set(auto0.listStates + auto1.listStates))
+        listeInitl = list(set(auto0.getListInitialStates() + auto1.getListInitialStates()))
+        listeFinal = list(set(auto0.getListFinalStates() + auto1.getListFinalStates()))
+        listeTrans = []
+
+        for etat in listeEtats:
+            etat.init = etat in listeInitl
+            etat.fin = etat in listeFinal
+
+        for trans in auto0.listTransitions + auto1.listTransitions:
+            if trans not in listeTrans:
+                listeTrans.append(trans)
+
+        return Automate(listeTrans, listeEtats)
+
+
+    @staticmethod
+    def concatenation (auto1, auto2):
+        """ Automate  -> Automate
+        rend l'automate acceptant pour langage la concatenation des langage des deux automates
+        """
+        return auto1
+
+
+    @staticmethod
     def etoile (auto):
         """ Automate  -> Automate
         rend l'automate acceptant pour langage l'étoile du langage de a
