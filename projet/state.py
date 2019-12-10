@@ -36,9 +36,9 @@ class State :
         # ret : str
         ret = str(self.label)
         if self.init :
-            ret = ret + "(init)"
+            ret = ret# + "(init)"
         if self.fin :
-            ret = ret+ "(fin)"
+            ret = ret# + "(fin)"
         return ret
 
 
