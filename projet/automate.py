@@ -61,6 +61,8 @@ class Automate(AutomateBase):
 
         return State.isFinalIn(res)
 
+
+
     @staticmethod
     def estComplet(auto,alphabet) :
         """ Automate x str -> bool
@@ -71,6 +73,7 @@ class Automate(AutomateBase):
                 if auto.succElem(state, a) == []:
                     return False
         return True
+
 
 
     @staticmethod
@@ -151,69 +154,67 @@ class Automate(AutomateBase):
         return Automate(listeTrans)
 
 
+
     @staticmethod
-    def complementaire(auto,alphabet):
+    def complementaire(auto, alphabet):
         """ Automate -> Automate
         rend  l'automate acceptant pour langage le complémentaire du langage de a
         """
-        autoComplementaire = Automate.completeAutomate(Automate.determinisation(auto),alphabet)
+        autoComplementaire = Automate.completeAutomate(Automate.determinisation(auto), alphabet)
         for state in autoComplementaire.listStates:
             state.fin = not state.fin
 
         return autoComplementaire
      
 
+
     @staticmethod
     def intersection (auto0, auto1):
         """ Automate x Automate -> Automate
         rend l'automate acceptant pour langage l'intersection des langages des deux automates
         """
-        inits = list(product(auto0.getListInitialStates(), auto1.getListInitialStates()))
-        finals = list(product(auto0.getListFinalStates(), auto1.getListFinalStates()))
+        alphabet = auto0.getAlphabetFromTransitions()
+        
+        etatsInit = list(product(auto0.getListInitialStates(), auto1.getListInitialStates()))
+        etatsFinal = list(product(auto0.getListFinalStates(), auto1.getListFinalStates()))
 
-        cpt = 0
-        cptToTuple = inits
-        Ss = []
-        Ts = []
-        for cpt in range(0, len(inits)):
-            Ss.append(State(cpt, True, inits[cpt] in finals, inits[cpt]))
+        etatsATraiter = etatsInit
+        dejaTraites = []
 
+        listeEtats = [ State(0, True, etat in etatsFinal, str(etat)) for etat in etatsInit ]
+        listeTrans = []
+        
+        while etatsATraiter != []:
+            coupleSrc = etatsATraiter.pop()
+            dejaTraites.append(coupleSrc)
 
-        print(cptToTuple, cptToTuple[0], cptToTuple[0][0], cptToTuple[0][1])
-        print(auto0.getListTransitionsFrom(cptToTuple[0][0])[0])
+            for etat in listeEtats:
+                if str(etat.label) == str(coupleSrc):
+                    idSrc = listeEtats.index(etat)
 
-        cpt = 0
-        for S in Ss:
-            tempLeft = [(t.etiquette, t.stateDest) for t in auto0.getListTransitionsFrom(cptToTuple[cpt][0])]
-            tempRight = [(t.etiquette, t.stateDest) for t in auto1.getListTransitionsFrom(cptToTuple[cpt][1])]
+            for lettre in alphabet:
+                setDst0 = auto0.succElem(coupleSrc[0], lettre)
+                setDst1 = auto1.succElem(coupleSrc[1], lettre)
+                couplesDst = set(product(setDst0, setDst1))
 
-            tempDLeft = dict()
-            tempDRight = dict()
-            for (k, v) in tempLeft:
-                if k not in tempDLeft:
-                    tempDLeft[k] = {v}
-                else:
-                    tempDLeft[k].add(v)
-            for (k, v) in tempRight:
-                if k not in tempDRight:
-                    tempDRight[k] = {v}
-                else:
-                    tempDRight[k].add(v)
-            print(tempDLeft, tempDRight)
-            for (k, v) in tempDLeft.items():
-                if k not in tempDRight: continue
-                prod = list(product(list(v), list(tempDRight[k])))
-                #print(prod)
-                for label in prod:
-                    if label not in cptToTuple:
-                        cptToTuple.append(label)
-                        Ss.append(State(len(Ss), False, label in finals, label))
-                        Ts.append(Transition(S, k, Ss[-1]))
-                    else:
-                        Ts.append(Transition(S, k, Ss[cptToTuple.index(label)]))
-            cpt += 1
+                if couplesDst != set():
+                    for couple in couplesDst:
+                        if couple not in dejaTraites:
+                            etatsATraiter.append(couple)
 
-        return Automate(Ts)
+                        isIn = False
+                        for etat in listeEtats:
+                            if str(etat.label) == str(couple):
+                                isIn = True
+                                listeTrans.append(Transition(listeEtats[idSrc], lettre, listeEtats[listeEtats.index(etat)]))
+                        
+                        if not isIn:
+                            isFinal = (couple[0].fin == True and couple[1].fin == True)
+                            listeEtats.append(State(len(listeEtats), False, isFinal, str(couple)))
+                            listeTrans.append(Transition(listeEtats[idSrc], lettre, listeEtats[-1]))
+            
+        return Automate(listeTrans)
+
 
 
     @staticmethod
@@ -221,20 +222,22 @@ class Automate(AutomateBase):
         """ Automate  -> Automate
         rend l'automate acceptant pour langage l'union des langages des deux automates
         """
-        listeEtats = list(set(auto0.listStates + auto1.listStates))
-        listeInitl = list(set(auto0.getListInitialStates() + auto1.getListInitialStates()))
-        listeFinal = list(set(auto0.getListFinalStates() + auto1.getListFinalStates()))
+        auto0_copie = copy.deepcopy(auto0)
+        auto1_copie = copy.deepcopy(auto1)
         listeTrans = []
 
-        for etat in listeEtats:
-            etat.init = etat in listeInitl
-            etat.fin = etat in listeFinal
+        # modification des états initiaux et finaux
+        for etat in list(set(auto0_copie.listStates + auto1_copie.listStates)):
+            etat.init = etat in list(set(auto0_copie.getListInitialStates() + auto1_copie.getListInitialStates()))
+            etat.fin = etat in list(set(auto0_copie.getListFinalStates() + auto1_copie.getListFinalStates()))
 
-        for trans in auto0.listTransitions + auto1.listTransitions:
+        # union des transitions
+        for trans in auto0_copie.listTransitions + auto1_copie.listTransitions:
             if trans not in listeTrans:
                 listeTrans.append(trans)
 
-        return Automate(listeTrans, listeEtats)
+        return Automate(listeTrans)
+
 
 
     @staticmethod
@@ -272,13 +275,12 @@ class Automate(AutomateBase):
         return Automate(listeTrans)
 
 
+
     @staticmethod
     def etoile (auto):
         """ Automate  -> Automate
         rend l'automate acceptant pour langage l'étoile du langage de a
         """
         autoEtoile = Automate.concatenation(auto, auto)
-        autoEtoile.addState(State(len(autoEtoile.listStates) + 1, True, True, "Eps"))
+        autoEtoile.addState(State(len(autoEtoile.listStates) + 1, True, True, "eps"))
         return autoEtoile
-
-
