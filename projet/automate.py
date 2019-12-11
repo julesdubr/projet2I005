@@ -131,7 +131,7 @@ class Automate(AutomateBase):
         while etatsATraiter != []:
             setSrc = etatsATraiter.pop()        # on récupère un set d'états aléatoire parmis les états à traiter
             dejaTraites.append(setSrc)          # on l'ajoute à la liste des états déjà traités
-            for etat in listeEtats:             # on récupère l'indice dans listeEtat de l'état source correspondant
+            for etat in listeEtats:             # on récupère l'indice dans listeEtats de l'état source correspondant
                 if str(etat.label) == str(setSrc):
                     idSrc = listeEtats.index(etat)
 
@@ -142,7 +142,7 @@ class Automate(AutomateBase):
                         etatsATraiter.append(setDst)
 
                     isIn = False
-                    for etat in listeEtats:     # si l'état dest est déjà dans listeEtats on le récupère
+                    for etat in listeEtats:     # si l'état dest existe déjà on récupère son indice
                         if str(etat.label) == str(setDst):
                             isIn = True
                             listeTrans.append(Transition(listeEtats[idSrc], lettre, listeEtats[listeEtats.index(etat)]))
@@ -185,30 +185,29 @@ class Automate(AutomateBase):
         listeTrans = []
         
         while etatsATraiter != []:
-            coupleSrc = etatsATraiter.pop()
-            dejaTraites.append(coupleSrc)
-
-            for etat in listeEtats:
+            coupleSrc = etatsATraiter.pop()     # on récupère un couple d'états aléatoire parmis les états à traiter
+            dejaTraites.append(coupleSrc)       # on l'ajoute à la liste des états déjà traités
+            for etat in listeEtats:             # on récupère l'indice dans listeEtats de l'état source correspondant
                 if str(etat.label) == str(coupleSrc):
                     idSrc = listeEtats.index(etat)
 
             for lettre in alphabet:
-                setDst0 = auto0.succElem(coupleSrc[0], lettre)
-                setDst1 = auto1.succElem(coupleSrc[1], lettre)
-                couplesDst = set(product(setDst0, setDst1))
+                setDst0 = auto0.succElem(coupleSrc[0], lettre)  # le set d'états d'arrivée partant de l'état source de l'auto0
+                setDst1 = auto1.succElem(coupleSrc[1], lettre)  # le set d'états d'arrivée partant de l'état source de l'auto0
+                couplesDst = set(product(setDst0, setDst1))     # le produit des ensembles d'arrivée
 
                 if couplesDst != set():
-                    for couple in couplesDst:
+                    for couple in couplesDst:           # on ajoute le couple aux états à traiter si on ne l'a jamais traité
                         if couple not in dejaTraites:
                             etatsATraiter.append(couple)
 
                         isIn = False
                         for etat in listeEtats:
-                            if str(etat.label) == str(couple):
+                            if str(etat.label) == str(couple):  # si l'état des existe déjà on récupère son indice
                                 isIn = True
                                 listeTrans.append(Transition(listeEtats[idSrc], lettre, listeEtats[listeEtats.index(etat)]))
                         
-                        if not isIn:
+                        if not isIn:                            # sinon on le crée
                             isFinal = (couple[0].fin == True and couple[1].fin == True)
                             listeEtats.append(State(len(listeEtats), False, isFinal, str(couple)))
                             listeTrans.append(Transition(listeEtats[idSrc], lettre, listeEtats[-1]))
